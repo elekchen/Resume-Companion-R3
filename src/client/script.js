@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
             progressBar.style.width = '0%';
             resultDiv.textContent = '正在生成简历...';
 
-            updateProgress(); // 调���进度更新函数
+            updateProgress(); // 调用进度更新函数
 
             const response = await fetch('/generate-resume', {
                 method: 'POST',
@@ -56,12 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateProgress() {
         let progress = 0;
         const interval = setInterval(() => {
-            progress += 10;
-            if (progress > 90) {
+            progress += 5; // 减少每次增加的进度
+            if (progress > 95) {
                 clearInterval(interval);
             } else {
                 progressBar.style.width = `${progress}%`;
             }
-        }, 500);
+        }, 1000); // 增加更新间隔到 1 秒
     }
 });
