@@ -4,7 +4,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { PDFDocument, rgb } = require('pdf-lib');
+const { rgb } = require('pdf-lib');
 const fontkit = require('@pdf-lib/fontkit');
 const iconv = require('iconv-lite');
 const pdfParse = require('pdf-parse');
@@ -12,6 +12,9 @@ const mammoth = require('mammoth');
 const { fromBuffer } = require('pdf2pic');
 const os = require('os');
 const { OpenAIClient, AzureKeyCredential } = require("@azure/openai");
+const PDFKit = require('pdfkit');
+const marked = require('marked');
+const { JSDOM } = require('jsdom');
 
 // Azure OpenAI 配置
 const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
@@ -68,8 +71,8 @@ async function polishResume(resumeContent) {
     console.log('开始简历润色过程');
     try {
         const messages = [
-            { role: "system", content: "你是一个专业的简历优化助手。你的任务是改进用户的简历，使其更加专业、有吸引力，并突出用户的优势。" },
-            { role: "user", content: `请优化以下简历内容：\n\n${resumeContent}` }
+            { role: "system", content: "你是一个专业的简历优化助手。你的任务是改进用户的简历，使其更加专业、有吸引力，并突出用户的优势。请直接返回优化后的简历内容，不要包含任何额外的说明或解释。" },
+            { role: "user", content: `请优化以下简历内容\n\n${resumeContent}` }
         ];
 
         console.log('发送请求到 Azure OpenAI');
@@ -84,7 +87,7 @@ async function polishResume(resumeContent) {
 
         if (result.choices && result.choices.length > 0) {
             console.log('简历润色成功完成');
-            return result.choices[0].message.content;
+            return result.choices[0].message.content.trim();
         } else {
             throw new Error('Azure OpenAI 返回的结果中没有内容');
         }
@@ -92,6 +95,103 @@ async function polishResume(resumeContent) {
         console.error('简历润色过程中发生错误:', error);
         throw error;
     }
+}
+
+async function generatePDF(content, images) {
+    return new Promise((resolve, reject) => {
+        const doc = new PDFKit({
+            size: 'A4',
+            margin: 50
+        });
+
+        const chunks = [];
+        doc.on('data', chunk => chunks.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+
+        const fontPath = path.join(__dirname, '../../fonts/SourceHanSansSC-Regular.otf');
+        doc.font(fontPath);
+
+        // 将 Markdown 转换为 HTML
+        const html = marked.parse(content);
+
+        // 使用 JSDOM 解析 HTML
+        const dom = new JSDOM(html);
+        const elements = dom.window.document.body.children;
+
+        let currentY = 50;  // 初始 Y 坐标
+
+        for (const element of elements) {
+            switch (element.tagName) {
+                case 'H1':
+                case 'H2':
+                case 'H3':
+                case 'H4':
+                case 'H5':
+                case 'H6':
+                    const level = parseInt(element.tagName[1]);
+                    const fontSize = 20 - (level * 2);
+                    doc.fontSize(fontSize).text(element.textContent, {
+                        continued: false,
+                        align: 'left'
+                    });
+                    currentY += fontSize + 10;
+                    break;
+                case 'P':
+                    doc.fontSize(12).text(element.textContent, {
+                        continued: false,
+                        align: 'justify',
+                        width: 500
+                    });
+                    currentY += doc.heightOfString(element.textContent, { width: 500 }) + 10;
+                    break;
+                case 'UL':
+                case 'OL':
+                    const items = element.getElementsByTagName('li');
+                    for (const item of items) {
+                        doc.fontSize(12).text(`• ${item.textContent}`, {
+                            continued: false,
+                            align: 'left',
+                            indent: 20,
+                            width: 480
+                        });
+                        currentY += doc.heightOfString(item.textContent, { width: 480 }) + 5;
+                    }
+                    currentY += 10;
+                    break;
+            }
+
+            if (currentY > 750) {  // A4 页面高度约为 842 点，留一些边距
+                doc.addPage();
+                currentY = 50;
+            }
+        }
+
+        // 添加图片
+        for (const image of images) {
+            doc.addPage();
+            const img = doc.openImage(image.data);
+            const imgAspectRatio = img.width / img.height;
+            const pageWidth = doc.page.width - 100;  // 留出边距
+            const pageHeight = doc.page.height - 100;
+            let imgWidth, imgHeight;
+
+            if (imgAspectRatio > 1) {
+                imgWidth = Math.min(img.width, pageWidth);
+                imgHeight = imgWidth / imgAspectRatio;
+            } else {
+                imgHeight = Math.min(img.height, pageHeight);
+                imgWidth = imgHeight * imgAspectRatio;
+            }
+
+            doc.image(image.data, {
+                fit: [imgWidth, imgHeight],
+                align: 'center',
+                valign: 'center'
+            });
+        }
+
+        doc.end();
+    });
 }
 
 app.post('/generate-resume', upload.single('resumeFile'), async (req, res) => {
@@ -150,60 +250,8 @@ app.post('/generate-resume', upload.single('resumeFile'), async (req, res) => {
         const fileName = `resume_${Date.now()}.pdf`;
         const filePath = path.join(generatedDir, fileName);
 
-        const pdfDoc = await PDFDocument.create();
-        pdfDoc.registerFontkit(fontkit);
-
-        const fontPath = path.join(__dirname, '../../fonts/SourceHanSansSC-Regular.otf');
-        const fontBytes = fs.readFileSync(fontPath);
-        const customFont = await pdfDoc.embedFont(fontBytes);
-
-        let page = pdfDoc.addPage();
-        const { width, height } = page.getSize();
-        const fontSize = 12;
-        const lineHeight = 1.5;
-        const margin = 50;
-
-        const lines = splitTextIntoLines(polishedResumeContent, customFont, fontSize, width - 2 * margin);
-
-        let y = height - margin;
-        for (const line of lines) {
-            if (y < margin + fontSize) {
-                page = pdfDoc.addPage();
-                y = height - margin;
-            }
-            page.drawText(line, {
-                x: margin,
-                y: y,
-                size: fontSize,
-                font: customFont,
-                color: rgb(0, 0, 0),
-            });
-            y -= fontSize * lineHeight;
-        }
-
-        // 添加图片
-        for (const image of images) {
-            let img;
-            if (image.contentType === 'image/jpeg') {
-                img = await pdfDoc.embedJpg(image.data);
-            } else if (image.contentType === 'image/png') {
-                img = await pdfDoc.embedPng(image.data);
-            } else {
-                console.warn(`Unsupported image type: ${image.contentType}`);
-                continue;
-            }
-            const imgDims = img.scale(0.5); // 缩放图片
-            page = pdfDoc.addPage();
-            page.drawImage(img, {
-                x: page.getWidth() / 2 - imgDims.width / 2,
-                y: page.getHeight() / 2 - imgDims.height / 2,
-                width: imgDims.width,
-                height: imgDims.height,
-            });
-        }
-
-        const pdfBytes = await pdfDoc.save();
-        fs.writeFileSync(filePath, pdfBytes);
+        const pdfBuffer = await generatePDF(polishedResumeContent, images);
+        fs.writeFileSync(filePath, pdfBuffer);
 
         console.log('PDF 文件生成完成');
         res.json({ downloadUrl: `/download/${fileName}` });
@@ -212,37 +260,6 @@ app.post('/generate-resume', upload.single('resumeFile'), async (req, res) => {
         res.status(500).json({ error: '内部服务器错误: ' + error.message });
     }
 });
-
-function splitTextIntoLines(text, font, fontSize, maxWidth) {
-    const lines = [];
-    const paragraphs = text.split('\n');
-
-    for (const paragraph of paragraphs) {
-        const words = paragraph.split(' ');
-        let currentLine = '';
-
-        for (const word of words) {
-            const testLine = currentLine ? `${currentLine} ${word}` : word;
-            const width = font.widthOfTextAtSize(testLine, fontSize);
-
-            if (width <= maxWidth) {
-                currentLine = testLine;
-            } else {
-                if (currentLine) lines.push(currentLine);
-                currentLine = word;
-            }
-        }
-
-        if (currentLine) {
-            lines.push(currentLine);
-        }
-
-        // 添加空行来分隔段落
-        lines.push('');
-    }
-
-    return lines;
-}
 
 app.get('/download/:fileName', (req, res) => {
     const filePath = path.join(generatedDir, req.params.fileName);
