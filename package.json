@@ -23,7 +23,9 @@
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1",
     "pdf2pic": "^2.2.4",
-    "pdfkit": "^0.15.0"
+    "pdfkit": "^0.15.0",
+    "puppeteer": "^23.4.0",
+    "svg-to-pdfkit": "^0.1.8"
   },
   "engines": {
     "node": ">=20.0.0"
