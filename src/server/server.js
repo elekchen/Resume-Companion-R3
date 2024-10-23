@@ -16,7 +16,7 @@ const PDFKit = require('pdfkit');
 const { getPrompts } = require('./resumePrompt');
 const puppeteer = require('puppeteer');
 
-// Azure OpenAI 配置
+// Azure OpenAI Configuration
 const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
 const azureApiKey = process.env.AZURE_OPENAI_KEY;
 const deploymentId = process.env.AZURE_OPENAI_DEPLOYMENT_ID;
@@ -26,15 +26,15 @@ const client = new OpenAIClient(endpoint, new AzureKeyCredential(azureApiKey));
 const app = express();
 app.use(express.json()); // Add this line to parse JSON request bodies
 
-// 设置 Multer 配置
+// Set up Multer configuration
 const upload = multer({
   dest: 'uploads/',
   limits: {
-    fieldSize: 50 * 1024 * 1024, // 增加字段大小限制到 50MB
+    fieldSize: 50 * 1024 * 1024, // Increase field size limit to 50MB
   }
 });
 
-// 确保 generated 文件夹存在
+// Ensure the 'generated' directory exists
 const generatedDir = path.join(__dirname, '../../generated');
 if (!fs.existsSync(generatedDir)) {
     fs.mkdirSync(generatedDir, { recursive: true });
@@ -81,36 +81,36 @@ async function convertSVGToPDF(svgString) {
 }
 
 async function polishResume(resumeContent, jobDescription) {
-    console.log('开始简历润色过程');
+    console.log('Starting resume polishing process');
     try {
         const messages = getPrompts(resumeContent, jobDescription);
 
-        console.log('发送请求到 Azure OpenAI');
+        console.log('Sending request to Azure OpenAI');
         const result = await client.getChatCompletions(deploymentId, messages, {
             temperature: 0.7,
-            max_tokens: 4000,  // 增加 token 限制
+            max_tokens: 4000,  // Increase token limit
             top_p: 0.95,
             frequency_penalty: 0,
             presence_penalty: 0,
         });
-        console.log('收到 Azure OpenAI 的响应');
+        console.log('Received response from Azure OpenAI');
 
         let polishedContent = result.choices[0].message.content;
-        console.log('润色后的内容:', polishedContent);
+        console.log('Polished content:', polishedContent);
 
-        // 确保 polishedContent 是字符串类型
+        // Ensure polishedContent is a string
         if (typeof polishedContent !== 'string') {
             polishedContent = String(polishedContent);
         }
 
         return polishedContent;
     } catch (error) {
-        console.error('简历润色过程中出错:', error);
+        console.error('Error during resume polishing process:', error);
         throw error;
     }
 }
 
-// 在 Express 路由中使用
+// Use in Express route
 app.post('/polish-resume', async (req, res) => {
     try {
         const { resumeContent, jobDescription } = req.body;
@@ -122,16 +122,16 @@ app.post('/polish-resume', async (req, res) => {
         res.setHeader('Content-Disposition', 'attachment; filename=polished_resume.pdf');
         res.send(pdfBuffer);
     } catch (error) {
-        res.status(500).json({ error: '简历处理失败' });
+        res.status(500).json({ error: 'Resume processing failed' });
     }
 });
 
 app.post('/generate-resume', upload.single('resumeFile'), async (req, res) => {
     try {
-        console.log('开始处理简历生成请求');
+        console.log('Starting resume generation request processing');
         let resumeContent;
         if (req.file) {
-            console.log(`读取上传的文件: ${req.file.originalname}`);
+            console.log(`Reading uploaded file: ${req.file.originalname}`);
             const fileExtension = path.extname(req.file.originalname).toLowerCase();
             const fileContent = fs.readFileSync(req.file.path);
 
@@ -145,39 +145,39 @@ app.post('/generate-resume', upload.single('resumeFile'), async (req, res) => {
                 resumeContent = iconv.decode(fileContent, 'utf-8');
             }
         } else if (req.body.resumeContent) {
-            console.log('使用文本区域的内容');
+            console.log('Using content from text area');
             resumeContent = req.body.resumeContent;
         } else {
-            console.log('未提供简历内容');
+            console.log('No resume content provided');
             return res.status(400).json({ error: 'No resume content provided' });
         }
 
-        // 调用简历润色功能
-        console.log('开始简历润色');
+        // Call resume polishing function
+        console.log('Starting resume polishing');
         let polishedResumeContent;
         try {
             polishedResumeContent = await polishResume(resumeContent, req.body.jobDescription);
-            console.log('简历润色完成');
+            console.log('Resume polishing completed');
         } catch (error) {
-            console.error('简历润色失败:', error);
-            return res.status(500).json({ error: '简历润色失败: ' + error.message });
+            console.error('Resume polishing failed:', error);
+            return res.status(500).json({ error: 'Resume polishing failed: ' + error.message });
         }
 
-        // 确保传递给 generatePDF 的是 SVG 内容
+        // Ensure that SVG content is passed to generatePDF
         const svgContent = extractSVGContent(polishedResumeContent);
-        console.log('提取的 SVG 内容:', svgContent);
+        console.log('Extracted SVG content:', svgContent);
 
-        console.log('开始生成 PDF');
+        console.log('Starting PDF generation');
         const fileName = `resume_${Date.now()}.pdf`;
         const filePath = path.join(generatedDir, fileName);
         const pdfBuffer = await convertSVGToPDF(svgContent);
         fs.writeFileSync(filePath, pdfBuffer);
 
-        console.log('PDF 文件生成完成');
+        console.log('PDF file generation completed');
         res.json({ downloadUrl: `/download/${fileName}` });
     } catch (error) {
-        console.error('处理请求时发生错误:', error);
-        res.status(500).json({ error: '内部服务器错误: ' + error.message });
+        console.error('Error processing request:', error);
+        res.status(500).json({ error: 'Internal server error: ' + error.message });
     }
 });
 
@@ -201,8 +201,11 @@ function extractSVGContent(content) {
     const svgEnd = content.lastIndexOf('</svg>') + 6;
     if (svgStart !== -1 && svgEnd !== -1) {
         const svgContent = content.slice(svgStart, svgEnd);
-        // 移除不必要的部分
+        // Remove unnecessary parts
         return svgContent.replace(/```svg|```/g, '').trim();
     }
     return null;
 }
+
+
+

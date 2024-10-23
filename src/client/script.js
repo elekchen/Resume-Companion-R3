@@ -17,16 +17,16 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (textArea.value.trim() !== '') {
             formData.append('resumeContent', textArea.value);
         } else {
-            resultDiv.textContent = '请输入简历信息或上传文件。';
+            resultDiv.textContent = 'Please enter resume information or upload a file.';
             return;
         }
 
         try {
             progressBar.style.display = 'block';
             progressBar.style.width = '0%';
-            resultDiv.textContent = '正在生成简历...';
+            resultDiv.textContent = 'Generating resume...';
 
-            updateProgress(); // 调用进度更新函数
+            updateProgress(); // Call the progress update function
 
             const response = await fetch('/generate-resume', {
                 method: 'POST',
@@ -36,32 +36,32 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok) {
                 const data = await response.json();
                 if (data.downloadUrl) {
-                    resultDiv.innerHTML = `<p>简历生成成功！<a href="${data.downloadUrl}" target="_blank">点击下载</a></p>`;
+                    resultDiv.innerHTML = `<p>Resume generated successfully! <a href="${data.downloadUrl}" target="_blank">Click to download</a></p>`;
                 } else {
-                    resultDiv.textContent = '生成简历时出错：未收到下载链接';
+                    resultDiv.textContent = 'Error generating resume: No download link received';
                 }
             } else {
                 const errorData = await response.json();
-                resultDiv.textContent = `生成简历时出错：${errorData.error || '未知错误'}`;
+                resultDiv.textContent = `Error generating resume: ${errorData.error || 'Unknown error'}`;
             }
         } catch (error) {
             console.error('Error:', error);
-            resultDiv.textContent = `发生错误：${error.message || '未知错误'}`;
+            resultDiv.textContent = `An error occurred: ${error.message || 'Unknown error'}`;
         } finally {
             progressBar.style.display = 'none';
         }
     });
 
-    // 模拟进度更新（因为我们没有实时进度信息）
+    // Simulate progress update (since we don't have real-time progress information)
     function updateProgress() {
         let progress = 0;
         const interval = setInterval(() => {
-            progress += 5; // 减少每次增加的进度
+            progress += 5; // Reduce the progress increment
             if (progress > 95) {
                 clearInterval(interval);
             } else {
                 progressBar.style.width = `${progress}%`;
             }
-        }, 1000); // 增加更新间隔到 1 秒
+        }, 1000); // Increase update interval to 1 second
     }
 });

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,11 +10,13 @@
     <div class="container">
         <h1>Resume Companion</h1>
         <form id="resumeForm" enctype="multipart/form-data">
-            <label for="resumeContent">简历内容：</label>
-            <textarea id="resumeContent" name="resumeContent" placeholder="请输入您的简历信息或上传简历文件"></textarea>
-            <label for="resumeFile">上传简历文件：</label>
+            <label for="resumeContent">Resume Content:</label>
+            <textarea id="resumeContent" name="resumeContent" placeholder="Enter your resume information or upload a resume file"></textarea>
+            <label for="resumeFile">Upload Resume File:</label>
             <input type="file" id="resumeFile" name="resumeFile" accept=".txt,.pdf,.doc,.docx">
-            <button type="submit">生成PDF简历</button>
+            <label for="jobDescription">Job Description:</label>
+            <textarea id="jobDescription" name="jobDescription" placeholder="Enter the job description"></textarea>
+            <button type="submit">Generate PDF Resume</button>
         </form>
         <div id="result"></div>
     </div>
