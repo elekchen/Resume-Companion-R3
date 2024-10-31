@@ -11,17 +11,23 @@ const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 const { fromBuffer } = require('pdf2pic');
 const os = require('os');
-const { OpenAIClient, AzureKeyCredential } = require("@azure/openai");
-const PDFKit = require('pdfkit');
+const axios = require('axios');
 const { getPrompts } = require('./resumePrompt');
 const puppeteer = require('puppeteer');
 
-// Azure OpenAI Configuration
-const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
-const azureApiKey = process.env.AZURE_OPENAI_KEY;
-const deploymentId = process.env.AZURE_OPENAI_DEPLOYMENT_ID;
+// Grok AI Configuration
+const GROK_API_KEY = process.env.GROK_API_KEY;
+if (!GROK_API_KEY) {
+    throw new Error('GROK_API_KEY is not set in environment variables');
+}
 
-const client = new OpenAIClient(endpoint, new AzureKeyCredential(azureApiKey));
+const grokClient = axios.create({
+    baseURL: 'https://api.x.ai/v1',
+    headers: {
+        'Authorization': `Bearer ${GROK_API_KEY}`,
+        'Content-Type': 'application/json'
+    }
+});
 
 const app = express();
 app.use(express.json()); // Add this line to parse JSON request bodies
@@ -85,17 +91,20 @@ async function polishResume(resumeContent, jobDescription) {
     try {
         const messages = getPrompts(resumeContent, jobDescription);
 
-        console.log('Sending request to Azure OpenAI');
-        const result = await client.getChatCompletions(deploymentId, messages, {
+        console.log('Sending request to Grok AI');
+        const response = await grokClient.post('/chat/completions', {
+            messages: messages,
+            model: 'grok-beta',
             temperature: 0.7,
-            max_tokens: 4000,  // Increase token limit
+            max_tokens: 4000,
             top_p: 0.95,
             frequency_penalty: 0,
-            presence_penalty: 0,
+            presence_penalty: 0
         });
-        console.log('Received response from Azure OpenAI');
 
-        let polishedContent = result.choices[0].message.content;
+        console.log('Received response from Grok AI');
+
+        let polishedContent = response.data.choices[0].message.content;
         console.log('Polished content:', polishedContent);
 
         // Ensure polishedContent is a string
