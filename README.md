@@ -1,6 +1,6 @@
 # Resume Companion
 
-Resume Companion is a GPT-powered resume optimization tool that enhances and beautifies resumes to match job descriptions.
+Resume Companion is an AI-powered resume optimization tool that enhances and beautifies resumes to match job descriptions.
 
 ## Features
 
@@ -14,20 +14,20 @@ Resume Companion is a GPT-powered resume optimization tool that enhances and bea
 
 - Backend: Node.js with Express
 - Frontend: HTML, CSS, JavaScript
-- AI: Azure OpenAI API
-- PDF Generation: pdf-lib, puppeteer
+- AI: Supports various LLM APIs (using Grok AI API as an example)
+- PDF Generation: puppeteer
 - File Parsing: pdf-parse, mammoth
 
 ## Prerequisites
 
 - Node.js (version 20.0.0 or higher)
-- Azure OpenAI API access
+- Grok AI API access (x.ai account)
 
 ## Installation
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/resume-companion.git
+   git clone https://github.com/elekchen/Resume-Companion-R3.git
    cd resume-companion
    ```
 
@@ -36,11 +36,9 @@ Resume Companion is a GPT-powered resume optimization tool that enhances and bea
    npm install
    ```
 
-3. Create a `.env` file in the root directory and add your Azure OpenAI credentials:
+3. Create a `.env` file in the root directory and add your Grok AI credentials:
    ```
-   AZURE_OPENAI_ENDPOINT=your_endpoint_here
-   AZURE_OPENAI_KEY=your_api_key_here
-   AZURE_OPENAI_DEPLOYMENT_ID=your_deployment_id_here
+   GROK_API_KEY=your_grok_api_key_here
    ```
 
 ## Usage
@@ -76,11 +74,12 @@ This project is licensed under the ISC License.
 
 ## Acknowledgements
 
-- [Azure OpenAI](https://azure.microsoft.com/en-us/products/cognitive-services/openai-service/)
+- [Grok AI (x.ai)](https://x.ai/)
 - [Express.js](https://expressjs.com/)
-- [pdf-lib](https://pdf-lib.js.org/)
 - [puppeteer](https://pptr.dev/)
+- [pdf-parse](https://www.npmjs.com/package/pdf-parse)
+- [mammoth](https://www.npmjs.com/package/mammoth)
 
 ## Contact
 
-If you have any questions, feel free to reach out to [Your Name] at [your.email@example.com].
+If you have any questions, feel free to reach out to [Your Name] at [elek@starm.ai].
