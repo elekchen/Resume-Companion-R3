@@ -9,7 +9,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@azure/openai": "^1.0.0-beta.5",
     "@pdf-lib/fontkit": "^1.1.1",

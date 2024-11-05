@@ -1,85 +1,142 @@
 # Resume Companion
 
-Resume Companion is an AI-powered resume optimization tool that enhances and beautifies resumes to match job descriptions.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Features
+An AI-powered resume optimization tool that automatically enhances and tailors resumes to match specific job descriptions.
 
-1. Upload resume or input personal information
-2. AI-powered resume enhancement and beautification
-3. Generate and download optimized resume in PDF format
-4. Tailored resume content based on job descriptions
-5. Single A4 page output for concise presentation
+## Key Features
 
-## Tech Stack
+- 🤖 AI-powered resume content optimization
+- 📝 Smart content adaptation based on job descriptions
+- 📄 Single A4 page output with professional formatting
+- 🎨 Automatic resume beautification
+- 💾 Multiple input formats support (PDF, DOCX, TXT)
+- ⬇️ Export to professional PDF format
 
-- Backend: Node.js with Express
-- Frontend: HTML, CSS, JavaScript
-- AI: Supports various LLM APIs (using Grok AI API as an example)
-- PDF Generation: puppeteer
-- File Parsing: pdf-parse, mammoth
+## Technology Stack
 
-## Prerequisites
+### Backend
+- Node.js (v20.0.0+)
+- Express.js
+- Grok AI API (x.ai)
 
-- Node.js (version 20.0.0 or higher)
-- Grok AI API access (x.ai account)
+### File Processing
+- puppeteer (PDF generation)
+- pdf-parse (PDF parsing)
+- mammoth (DOCX parsing)
 
-## Installation
+### Frontend
+- HTML5
+- CSS3
+- Vanilla JavaScript
 
-1. Clone the repository:
-   ```
-   git clone https://github.com/elekchen/Resume-Companion-R3.git
-   cd resume-companion
-   ```
+## Getting Started
 
-2. Install dependencies:
-   ```
-   npm install
-   ```
+### Prerequisites
+1. Node.js (v20.0.0 or higher)
+2. x.ai account with Grok AI API access
+3. npm or yarn package manager
 
-3. Create a `.env` file in the root directory and add your Grok AI credentials:
-   ```
-   GROK_API_KEY=your_grok_api_key_here
-   ```
+### Installation
 
-## Usage
+1. Clone the repository
+```bash
+git clone https://github.com/elekchen/Resume-Companion-R3.git
+cd Resume-Companion-R3
+```
 
-1. Start the server:
-   ```
-   npm start
-   ```
+2. Install dependencies
+```bash
+npm install
+```
 
-2. Open a web browser and navigate to `http://localhost:3000`
+3. Configure environment variables
+```bash
+# Create .env file in project root
+cp .env.example .env
 
-3. Upload your resume file or input your resume content in the text area
+# Add your Grok AI API key to .env
+GROK_API_KEY=your_grok_api_key_here
+```
 
-4. Provide the job description for the position you're applying for
+### Development
 
-5. Click "Generate PDF Resume" to create your optimized resume
+Start the development server:
+```bash
+npm run dev
+```
 
-6. Download the generated PDF resume
+### Production
 
-## API Endpoints
+Start the production server:
+```bash
+npm start
+```
 
-- `POST /polish-resume`: Polishes the resume content based on the job description
-- `POST /generate-resume`: Generates a PDF resume from the polished content
-- `GET /download/:fileName`: Downloads the generated PDF resume
+## API Documentation
+
+### Endpoints
+
+#### POST /polish-resume
+Optimizes resume content based on job description.
+```javascript
+{
+  "resumeContent": "string",
+  "jobDescription": "string"
+}
+```
+
+#### POST /generate-resume
+Generates PDF resume from optimized content.
+```javascript
+{
+  "resumeContent": "string",
+  "jobDescription": "string"
+}
+```
+
+#### GET /download/:fileName
+Downloads generated PDF resume.
+
+## Project Structure
+```
+Resume-Companion-R3/
+├── src/
+│   ├── client/          # Frontend files
+│   ├── server/          # Backend files
+│   └── utils/           # Utility functions
+├── generated/           # Generated PDF files
+├── uploads/            # Temporary upload directory
+└── tests/              # Test files
+```
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## License
 
-This project is licensed under the ISC License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For support, please:
+- Open an [issue](https://github.com/elekchen/Resume-Companion-R3/issues)
+- Contact: elek@starm.ai
 
 ## Acknowledgements
 
-- [Grok AI (x.ai)](https://x.ai/)
-- [Express.js](https://expressjs.com/)
-- [puppeteer](https://pptr.dev/)
-- [pdf-parse](https://www.npmjs.com/package/pdf-parse)
-- [mammoth](https://www.npmjs.com/package/mammoth)
+- [Grok AI](https://x.ai/) - AI model provider
+- [Express.js](https://expressjs.com/) - Web framework
+- [puppeteer](https://pptr.dev/) - PDF generation
+- [pdf-parse](https://www.npmjs.com/package/pdf-parse) - PDF parsing
+- [mammoth](https://www.npmjs.com/package/mammoth) - DOCX parsing
 
-## Contact
-
-If you have any questions, feel free to reach out to [Your Name] at [elek@starm.ai].
+---
+Made with ❤️ by [starm.ai](https://starm.ai/)
